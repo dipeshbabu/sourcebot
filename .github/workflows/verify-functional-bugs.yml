@@ -1,0 +1,77 @@
+name: Verify functional bug fixes before PRs
+
+on:
+  push:
+    branches: [dipeshbabu/verify-functional-bugs]
+
+permissions:
+  contents: read
+
+jobs:
+  application:
+    name: Test and lint (${{ matrix.issue }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - issue: 1681
+            ref: dipeshbabu/fix-search-repository-lookups-1681
+          - issue: 1387
+            ref: dipeshbabu/fix-browse-recents-1387
+          - issue: 131
+            ref: dipeshbabu/fix-selected-search-filters-131
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.ref }}
+          submodules: true
+      - name: Record tested commit
+        run: git rev-parse HEAD
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+      - name: Install
+        run: yarn install --frozen-lockfile
+      - name: Test
+        run: yarn workspaces foreach --all --topological --exclude setup-sourcebot --exclude 'root-workspace-*' run test
+      - name: Lint
+        if: ${{ !cancelled() }}
+        run: yarn lint
+      - name: Test vulnerability automation
+        if: ${{ !cancelled() }}
+        run: |
+          .github/scripts/test-vulnerability-triage.sh
+          .github/scripts/test-cve-remediation.sh
+          .github/scripts/testZoektSync.sh
+          .github/scripts/test-entrypoint-install-id.sh
+
+  build:
+    name: PR Gate (${{ matrix.issue }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - issue: 1681
+            ref: dipeshbabu/fix-search-repository-lookups-1681
+          - issue: 1387
+            ref: dipeshbabu/fix-browse-recents-1387
+          - issue: 131
+            ref: dipeshbabu/fix-selected-search-filters-131
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.ref }}
+          submodules: true
+          fetch-depth: 0
+      - name: Record tested commit
+        run: git rev-parse HEAD
+      - name: Check Prisma migrations
+        uses: ./.github/actions/check-prisma-migrations
+        with:
+          base-ref: main
+      - name: Build Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
