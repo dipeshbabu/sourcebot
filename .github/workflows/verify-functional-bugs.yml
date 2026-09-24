@@ -15,12 +15,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - issue: 1681
-            ref: dipeshbabu/fix-search-repository-lookups-1681
           - issue: 1387
             ref: dipeshbabu/fix-browse-recents-1387
-          - issue: 131
-            ref: dipeshbabu/fix-selected-search-filters-131
     steps:
       - uses: actions/checkout@v4
         with:
@@ -53,12 +49,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - issue: 1681
-            ref: dipeshbabu/fix-search-repository-lookups-1681
           - issue: 1387
             ref: dipeshbabu/fix-browse-recents-1387
-          - issue: 131
-            ref: dipeshbabu/fix-selected-search-filters-131
     steps:
       - uses: actions/checkout@v4
         with:
@@ -75,3 +67,47 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
+
+  regressions:
+    name: Prove regression (${{ matrix.issue }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - issue: 1681
+            ref: dipeshbabu/fix-search-repository-lookups-1681
+            source: packages/web/src/features/search/zoektSearcher.ts
+            test: zoektSearcher.test.ts
+          - issue: 1387
+            ref: dipeshbabu/fix-browse-recents-1387
+            source: packages/web/src/app/(app)/browse/components/fileSearchCommandDialog.tsx
+            test: fileSearchCommandDialog.test.tsx
+          - issue: 131
+            ref: dipeshbabu/fix-selected-search-filters-131
+            source: packages/web/src/app/(app)/search/components/filterPanel/filter.tsx
+            test: filter.test.tsx
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.ref }}
+          fetch-depth: 0
+          submodules: true
+      - name: Record tested commit
+        run: git rev-parse HEAD
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+      - name: Install
+        run: yarn install --frozen-lockfile
+      - name: Regression tests pass with the fix
+        run: yarn workspace @sourcebot/web test --run '${{ matrix.test }}'
+      - name: Regression tests reject the original implementation
+        run: |
+          git restore --source=b4931510050233e940992773468afd4252ebc89f -- '${{ matrix.source }}'
+          if yarn workspace @sourcebot/web test --run '${{ matrix.test }}' > "$RUNNER_TEMP/regression.log" 2>&1; then
+            cat "$RUNNER_TEMP/regression.log"
+            echo 'Regression tests unexpectedly passed without the fix.'
+            exit 1
+          fi
+          cat "$RUNNER_TEMP/regression.log"
