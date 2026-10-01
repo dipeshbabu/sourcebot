@@ -15,8 +15,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - issue: 1681
+            ref: 5fd82986d55b6e4f56fc67291609288ebe2935d6
+          - issue: 131
+            ref: 0bb329bb4c009807eb2fc2ec8d7c1beea62c3ffa
           - issue: 1387
-            ref: dipeshbabu/fix-browse-recents-1387
+            ref: b0298926f7b2e1ea8a41bb10f8c84c0a01156a44
     steps:
       - uses: actions/checkout@v4
         with:
@@ -49,8 +53,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - issue: 1681
+            ref: 5fd82986d55b6e4f56fc67291609288ebe2935d6
+          - issue: 131
+            ref: 0bb329bb4c009807eb2fc2ec8d7c1beea62c3ffa
           - issue: 1387
-            ref: dipeshbabu/fix-browse-recents-1387
+            ref: b0298926f7b2e1ea8a41bb10f8c84c0a01156a44
     steps:
       - uses: actions/checkout@v4
         with:
@@ -76,15 +84,15 @@ jobs:
       matrix:
         include:
           - issue: 1681
-            ref: dipeshbabu/fix-search-repository-lookups-1681
+            ref: 5fd82986d55b6e4f56fc67291609288ebe2935d6
             source: packages/web/src/features/search/zoektSearcher.ts
             test: zoektSearcher.test.ts
           - issue: 1387
-            ref: dipeshbabu/fix-browse-recents-1387
+            ref: b0298926f7b2e1ea8a41bb10f8c84c0a01156a44
             source: packages/web/src/app/(app)/browse/components/fileSearchCommandDialog.tsx
             test: fileSearchCommandDialog.test.tsx
           - issue: 131
-            ref: dipeshbabu/fix-selected-search-filters-131
+            ref: 0bb329bb4c009807eb2fc2ec8d7c1beea62c3ffa
             source: packages/web/src/app/(app)/search/components/filterPanel/filter.tsx
             test: filter.test.tsx
     steps:
